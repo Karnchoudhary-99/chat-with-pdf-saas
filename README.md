@@ -42,8 +42,28 @@ PDF bytes → pdf.js text extraction (line-aware via glyph y-coords)
 **Honest retrieval.** The extractive composer never generates text — it quotes
 the document's own sentences, so it can't hallucinate. Two-stage gating keeps
 it honest: a permissive cosine floor retrieves candidates, then a strict
-query-term-overlap gate decides what gets cited. No evidence → it says so
+query-term-overlap gate decides what gets cited. Chunks are ranked by
+sentence-level evidence (term overlap + section-heading match + term-density
+tie-break), not by raw cosine score, so a keyword mention in the intro can't
+outrank the actual answer under its section heading. No evidence → it says so
 instead of inventing an answer.
+
+## Evaluation
+
+`npm run eval` runs a 12-case gold set over a fixture manual and reports four
+metrics (also runs in CI, failing below 0.5 groundedness):
+
+| metric | what it measures | baseline |
+| ------ | ---------------- | -------- |
+| groundedness | expected answer phrases present in answer text + citations | 1.0000 |
+| citation_precision | citations whose excerpt supports the answer | 1.0000 |
+| retrieval_recall | expected phrase in top-5 retrieved chunks | 1.0000 |
+| escalation_accuracy | correct escalate / don't-escalate decision | 1.0000 |
+
+The harness caught a real ranking bug during development: a question like
+"How long do refunds take?" was answered from the intro's keyword mention
+instead of the refunds section — fixed by ranking chunks on sentence evidence
+rather than cosine score.
 
 ## API reference
 
@@ -74,7 +94,8 @@ const lib = await DocumentLibrary.open({
 - [x] Vector retrieval over per-doc embeddings
 - [x] RAG answer composer with citations + streaming API
 - [x] Multi-doc SaaS API: upload, library, per-doc sessions
-- [ ] Eval harness + Docker, then self-review and public flip
+- [x] Eval harness + Docker, then self-review and public flip
+- [x] Eval harness (groundedness/citation/recall/escalation metrics, CI gate)
 
 ## License
 
