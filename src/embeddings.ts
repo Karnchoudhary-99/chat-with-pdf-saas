@@ -18,7 +18,18 @@ function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 1);
+    .filter((t) => t.length > 1)
+    .map(stem);
+}
+
+/** Tiny deterministic stemmer so "refunds" matches "refund". */
+function stem(t: string): string {
+  if (t.length <= 3) return t;
+  if (t.endsWith("ies") && t.length > 5) return t.slice(0, -3) + "y";
+  if (/(ses|xes|zes|ches|shes)$/.test(t)) return t.slice(0, -2);
+  if (t.endsWith("es") && t.length > 4 && !t.endsWith("aes")) return t.slice(0, -1);
+  if (t.endsWith("s") && !t.endsWith("ss")) return t.slice(0, -1);
+  return t;
 }
 
 /** Deterministic signed hash of a token -> [0, dim). */
