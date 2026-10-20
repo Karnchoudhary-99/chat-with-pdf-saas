@@ -1,0 +1,12 @@
+{
+  "name": "chat-with-pdf-saas",
+  "version": "0.1.0",
+  "description": "Chat with your PDFs - RAG-powered document Q&A SaaS",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "dev": "tsx src/cli.ts"
+  },
+  "license": "MIT"
+}
