@@ -101,23 +101,57 @@ export class AnswerComposer {
     }
 
     const terms = queryTerms(question);
-    // Best sentence per chunk (max query-term overlap), one citation per chunk.
-    const picked: { sentence: string; hit: ScoredChunk; overlap: number }[] = [];
+    // Best sentence per chunk, but chunks are ranked by sentence-level
+    // evidence (query-term overlap + section-heading bonus), NOT by chunk
+    // cosine score: the hash embedder is a weak ranker, so a keyword mention
+    // in the intro must not outrank the actual answer under "REFUNDS".
+    interface Picked {
+      sentence: string;
+      hit: ScoredChunk;
+      score: number;
+    }
+    const perChunk: Picked[] = [];
     for (const hit of evidence) {
-      let best: { sentence: string; overlap: number } | null = null;
+      const section = (hit.chunk.section ?? "").toLowerCase();
+      const sectionBonus = [...terms].some(
+        (t) => section.length > 0 && section.includes(t),
+      )
+        ? 1
+        : 0;
+      let best: Picked | null = null;
+      let bestDensity = 0;
       for (const s of sentences(hit.chunk.text)) {
         const words = new Set(s.toLowerCase().split(/[^a-z0-9]+/));
         let overlap = 0;
         for (const t of terms) if (words.has(t)) overlap++;
-        if (overlap > 0 && (!best || overlap > best.overlap)) {
-          best = { sentence: s, overlap };
+        const score = overlap + sectionBonus;
+        // Tie-break: query-term density. When two sentences match the same
+        // terms, the shorter, more focused one usually holds the answer
+        // (e.g. "Refunds are issued within 30 days." beats a long intro
+        // sentence that merely mentions refunds among other topics).
+        const density = overlap / Math.max(1, words.size);
+        if (
+          overlap > 0 &&
+          (!best || score > best.score || (score === best.score && density > bestDensity))
+        ) {
+          best = { sentence: s, hit, score };
+          bestDensity = density;
         }
       }
-      if (best) picked.push({ sentence: best.sentence, hit, overlap: best.overlap });
+      if (best) perChunk.push(best);
+    }
+    // Rank chunks by sentence evidence first, chunk score second. Dedupe
+    // identical sentences that can appear in overlapping chunks.
+    perChunk.sort((a, b) => b.score - a.score || b.hit.score - a.hit.score);
+    const seen = new Set<string>();
+    const picked: Picked[] = [];
+    for (const c of perChunk) {
+      const key = c.sentence.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      picked.push(c);
       if (picked.length >= maxSentences) break;
     }
-    // Order by evidence strength, then overlap.
-    picked.sort((a, b) => b.hit.score - a.hit.score || b.overlap - a.overlap);
 
     if (picked.length === 0) {
       return {
@@ -143,8 +177,7 @@ export class AnswerComposer {
     }));
 
     const confidence =
-      evidence.slice(0, picked.length).reduce((s, h) => s + h.score, 0) /
-      Math.max(1, picked.length);
+      picked.reduce((s, p) => s + p.hit.score, 0) / Math.max(1, picked.length);
     const text =
       picked.map((p) => p.sentence).join(" ") +
       "\n\nSources: " +
