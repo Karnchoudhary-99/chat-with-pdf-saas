@@ -8,5 +8,14 @@
     "test": "vitest run",
     "dev": "tsx src/cli.ts"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
 }
