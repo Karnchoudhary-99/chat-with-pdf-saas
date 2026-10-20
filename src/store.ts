@@ -80,6 +80,20 @@ export class VectorStore {
     }));
   }
 
+  /** Internal rehydration support: iterate stored documents with vectors. */
+  entries(): { docId: string; title: string; chunks: Chunk[]; vectors: number[][] }[] {
+    return [...this.docs.values()];
+  }
+
+  /** Restore the store dimension when rehydrating from a snapshot. */
+  setDimension(dim: number | null): void {
+    this.dimension = dim;
+  }
+
+  getDimension(): number | null {
+    return this.dimension;
+  }
+
   /** Cosine search over all docs, or a subset when docIds is given. */
   search(
     queryVector: number[],

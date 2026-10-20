@@ -97,6 +97,19 @@ export function chunkText(
     }
     if (j === i) j = i + 1; // pathological single huge word: keep it
 
+    // Snap to a sentence boundary: don't end a chunk mid-sentence when the
+    // remaining words of the sentence still fit under maxTokens.
+    let tok = chars / CHARS_PER_TOKEN;
+    while (j < allWords.length && tok < maxTokens) {
+      const lastChar = allWords[j - 1]!.slice(-1);
+      if (/[.!?]/.test(lastChar)) break;
+      const wlen = allWords[j]!.length + 1;
+      if ((chars + wlen) / CHARS_PER_TOKEN > maxTokens) break;
+      chars += wlen;
+      j++;
+      tok = chars / CHARS_PER_TOKEN;
+    }
+
     const charStart = wordStart[i];
     const lastWord = allWords[j - 1];
     const charEnd = wordStart[j - 1] + lastWord.length;

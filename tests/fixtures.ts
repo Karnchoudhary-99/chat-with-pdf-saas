@@ -52,19 +52,45 @@ export function buildPdf(pages: string[][]): Buffer {
   return Buffer.from(parts.join("") + xref + trailer, "latin1");
 }
 
-/** A two-page "product manual" style PDF used across ingestion tests. */
+/** A six-page "product manual" style PDF used across ingestion tests.
+ *  Each page covers a distinct topic so retrieval tests discriminate. */
 export function sampleManualPdf(): Buffer {
   return buildPdf([
     [
       "ACME Cloud Docs",
       "INTRODUCTION",
-      "Welcome to ACME Cloud. This manual covers setup and billing.",
+      "Welcome to ACME Cloud. This manual covers setup, billing, refunds,",
+      "the developer API, security practices, and troubleshooting.",
+    ],
+    [
+      "GETTING STARTED",
+      "Create an account at cloud.acme.example, then verify your email.",
+      "Install the command line tool with npm install -g acme-cli.",
+      "Run acme login and paste the API token from your dashboard.",
     ],
     [
       "BILLING",
-      "Plans start at $9 per month.",
+      "Plans start at $9 per month for the Starter tier.",
+      "The Pro tier costs $49 per month and includes priority support.",
+      "Invoices are emailed on the first day of each billing cycle.",
+    ],
+    [
       "REFUNDS",
       "Refunds are issued within 30 days of purchase.",
+      "To request a refund, open a ticket with your order number.",
+      "Refunded amounts return to the original payment method.",
+    ],
+    [
+      "DEVELOPER API",
+      "All API requests need a bearer token in the Authorization header.",
+      "The base URL is https://api.acme.example/v1.",
+      "Rate limits are 100 requests per minute per token.",
+    ],
+    [
+      "TROUBLESHOOTING",
+      "If the CLI reports authentication errors, rotate your API token.",
+      "For billing questions, contact billing@acme.example.",
+      "Status page: https://status.acme.example shows live incidents.",
     ],
   ]);
 }
