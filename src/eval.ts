@@ -273,13 +273,18 @@ function printReport(report: EvalReport): void {
   );
 }
 
+/** CI gate predicate: groundedness must clear the threshold. */
+export function evalPassed(report: EvalReport, threshold = 0.5): boolean {
+  return report.metrics.groundedness >= threshold;
+}
+
 /** CLI entrypoint: `npm run eval`. Fails CI when groundedness < 0.5. */
 export async function main(): Promise<void> {
   const { lib, embedder } = await buildEvalLibrary();
   const report = await runEval(lib, embedder, DEFAULT_GOLD_SET);
   printReport(report);
   const g = report.metrics.groundedness;
-  if (g < 0.5) {
+  if (!evalPassed(report)) {
     console.error(`\neval FAILED: groundedness ${g.toFixed(4)} < 0.5`);
     process.exit(1);
   }
