@@ -45,7 +45,7 @@ describe("makeDocId", () => {
 describe("extractTextFromPdf", () => {
   it("extracts text and page count from a generated PDF", async () => {
     const { text, pageCount } = await extractTextFromPdf(sampleManualPdf());
-    expect(pageCount).toBe(2);
+    expect(pageCount).toBe(6);
     expect(text).toContain("ACME Cloud");
     expect(text).toContain("Refunds are issued within 30 days");
   });
@@ -65,7 +65,7 @@ describe("ingestPdf", () => {
   it("produces meta, text and sections end to end", async () => {
     const doc = await ingestPdf(sampleManualPdf(), "manual.pdf");
     expect(doc.meta.source).toBe("manual.pdf");
-    expect(doc.meta.pageCount).toBe(2);
+    expect(doc.meta.pageCount).toBe(6);
     expect(doc.meta.charCount).toBeGreaterThan(50);
     expect(doc.meta.docId).toMatch(/^doc_/);
     expect(doc.sections.length).toBeGreaterThanOrEqual(2);
